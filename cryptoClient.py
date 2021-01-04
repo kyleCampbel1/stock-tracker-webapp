@@ -1,5 +1,6 @@
 import cryptowatch as cw
 from datetime import datetime, timedelta
+from api.app import db
 
 # metrics to create could be stored in DB from user end
 # then createMetrics retrieves and forms the requests
