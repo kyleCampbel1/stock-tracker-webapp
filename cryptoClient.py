@@ -29,6 +29,13 @@ def processCandle(candle):
     volumes.append(candle.of_1m[-1][5])
     return
 
+def verifyTicker(pair, exchange):
+    ticker = "{}:{}".format(exchange, pair).upper()
+    response = cw.markets.get(ticker)
+    # if response is error return false
+    # return response['active']
+    return True, ticker
+
 def main():
     query()
     return
