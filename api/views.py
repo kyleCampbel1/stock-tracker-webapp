@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, redirect, url_for, request, flash, session
 from .app import db 
 from .models import User
 from cryptoClient import verifyTicker
-from .utils import addMarketToDb, addMarketToUser
+from .utils import addMarketToDb, addMarketToUser, removeMarket
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -114,9 +114,8 @@ def remove_metric():
     isValid, ticker = verifyTicker(metric_ticker, metric_exchange)
 
     if isValid:
-        new_market = Markets(ticker)
-
-    return 
+        removeMarket(ticker)
+    return 'Done', 204
 
 @main.route('/metric_rankings', methods=['GET'])
 @login_required
