@@ -128,6 +128,7 @@ def metric_rankings():
 @login_required
 def my_markets():
     my_markets = User.query.filter_by(id=g.user.id).first().markets
-    return jsonify({"markets":my_markets})
+    resp = [market.ticker for market in my_markets]
+    return jsonify({"tickers":resp})
 
 

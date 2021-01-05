@@ -7,13 +7,14 @@ def addMarketToUser(ticker):
     # TODO enforce there is a user (should be due to earlier protocols)
     if not ticker in user.markets:
         market = Markets.query.filter_by(ticker=ticker).first()
-        sql = "INSERT INTO tags (user_id, market_id) VALUES ({}, {})".format(user.id, market.id)
-        db.session.execute(sql)
+        print(market)
+        user.markets.append(market)
+        db.session.commit()
     return
 
 def addMarketToDb(ticker):
     market = Markets.query.filter_by(ticker=ticker).first()
-    if market is None:
+    if not market:
         new_market = Markets(ticker=ticker)
         db.session.add(new_market)
         db.session.commit()
