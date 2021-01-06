@@ -20,7 +20,7 @@ Running in test mode:
 The current functionality of the unit tests are limited, and they will likely end in failure. However, running python3 -m unittest tests/<testFile>.py will run the specific testfile. I will be improving the robustness of these tests going forwards. I struggled to find resources on granting test application context, as many endpoints require a user to be logged-in, meaning I have not yet been able to test those.
   
 How testing should be further expanded:
-
+I will finish making unit tests for each endpoint of the API and for the accessory functions. We can also add testing for the status codes. Currently, there isn't testing for faulty inputs, so I will devise ways to handle invalid inputs and expand testing for them. I shoul make automated tests to simulate numerous users and metrics and tracking response time. Adding integration tests to ensure the Cryptowatch API works dependably is also a priority.
 
 Architecture:
 
@@ -34,13 +34,9 @@ Using Click, I defined a custom command, which using cron as specified above wil
 
 
 Scalability:
+Immediate features to add for scaling would be a process that clears the Metric table of data that is over 1 day old. Currently, if a user requests their metric ranking, all of their metric data from the past 24 hours is queried, and the standard deviation for each metric is computed. If many users were to request this, and they shared common metrics, it might be better to compute the rankings at regular intervals for all metrics, and then filter an ordered sublist with only the metrics relevant to each user upon request. I could also use Celery to offload requests or load balancers. 
 
+If the number of metrics to track increased, and the frequency of querying them increased, I think distributing the requirements with a server for each metric could be scalable. Creating a table and class for each metric could also lead to query improvements. I also think that creating modules to stop computing the 1 hr average of each metric every time a metric is queried and instead compute the change based on the additional observed datapoint would reduce computational load. 
 
 Monitoring:
-
-
-
-Metric rankings could be computed across all metrics for all users and then filter the displayed metrics by each user.
-Could create tables in database for each market if searching for the instances of each market in the Metric table became too expensive as the number of markets increases.
-
-
+For monitoring, I would add log files to notify the server maintainer if a certain number of requests fail within a certain time period, and log all errors clients receive. I would also need to add monitoring to the cron job to ensure that market data is collected on schedule. Creating monitoring on the database, to ensure that the tables are of expected size and parameters. I would also monitor average response time and user volume throughout the day. Random tests of selecting a user and performing queries to the API and comparing expected output to API response could also be of use.
