@@ -1,13 +1,13 @@
 import functools
+import numpy as np
 
 from flask import Blueprint, jsonify, redirect, url_for, request, flash, session, g
 from .app import db 
-from .models import User
-from cryptoClient import verifyTicker
-from .utils import addMarketToDb, addMarketToUser, removeMarket
+from .models import User, Metric, Markets
+from .utils import addMarketToDb, addMarketToUser, removeMarket, getDayHistory
+from .cryptoClient import verifyTicker
 from werkzeug.security import generate_password_hash, check_password_hash
-
-
+from datetime import datetime, timedelta
 
 auth = Blueprint('auth', __name__)
 
@@ -82,13 +82,23 @@ def login_required(view):
 
 main = Blueprint('main', __name__)
 
-@main.route('/<metric>_day_view', methods=['GET'])
+@main.route('/<ticker>_<exchange>_day_view', methods=['GET'])
 @login_required
-def metric_day_view(metric):
+def metric_day_view(ticker, exchange):
+    # end point will be of the form '/btcusdt_kraken_day_view'
+    isValid, ticker1 = verifyTicker(ticker, exchange)
+    if isValid:
+        user = User.query.filter_by(id=g.user.id).first()
+        market = Markets.query.filter_by(ticker=ticker1).first()
+        if not market in user.markets:
+            return "Permission denied, add this metric first"
+        else: # query  24 hr data
+            day_change = getDayHistory(market)
+            return jsonify({'day_change':day_change})
+    
+    return "Invalid link or metric identifiers"
 
-    day_change = []
-
-    return jsonify({'day_change':day_change})
+    
 
 @main.route('/add_metric', methods=['POST'])
 @login_required
@@ -101,6 +111,8 @@ def add_metric():
     if isValid:
         addMarketToDb(ticker)
         addMarketToUser(ticker)
+    else:
+        return 'Invalid Market Identifier Error'
 
     return 'Done', 201
 
@@ -120,8 +132,17 @@ def remove_metric():
 @main.route('/metric_rankings', methods=['GET'])
 @login_required
 def metric_rankings():
-
-    return "hi"
+    user = User.query.filter_by(id=g.user.id).first()
+    user_market_names = np.array([market.ticker for market in user.markets])
+    deviations = []
+    for market in user.markets:
+        day_change = getDayHistory(market)
+        volumes = np.array([metric.volume for metric in day_change])
+        stdDev = np.std(volumes)
+        deviations += [stdDev]
+    sortInds = np.argsort(deviations)
+    sorted_metrics = user_market_names[sortInds]
+    return sorted_metrics
 
 @main.route('/my_markets', methods=['GET'])
 @login_required

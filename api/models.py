@@ -7,9 +7,9 @@ tags = db.Table('tags',
 
 class Metric(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    ticker = db.Column(db.String(100), db.ForeignKey('markets.ticker'), nullable=False)
+    market_id = db.Column(db.Integer, db.ForeignKey('markets.id'), nullable=False)
     # give fields in accordance with what we query from cryptowatch
-    close_time = db.Column(db.DateTime)
+    close_time = db.Column(db.Float)
     open_price = db.Column(db.Float)
     high = db.Column(db.Float)
     low = db.Column(db.Float)
