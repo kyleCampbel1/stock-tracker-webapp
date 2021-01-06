@@ -14,11 +14,16 @@ auth = Blueprint('auth', __name__)
 @auth.route('/login', methods=['POST'])
 def login():
     user_data = request.get_json()
-    email = user_data['email']
-    password = user_data['password']
+    error = None
+    email = ''
+    passoword = ''
+    if not user_data:
+        error = "Bad Data Format"
+    else:
+        email = user_data['email']
+        password = user_data['password']
 
     user = User.query.filter_by(email=email).first()
-    error = None
     if not user or not check_password_hash(user.password, password):
         error = 'Incorrect credentials'
     if error is None:
@@ -27,21 +32,24 @@ def login():
             return redirect(url_for('main.add_metric'))
     # if the above check passes, then we know the user has the right credentials
     flash(error)
-    return redirect(url_for('auth.login')) # if the user doesn't exist or password is wrong, reload the page
+    return error # if the user doesn't exist or password is wrong, reload the page
 
-@auth.route('/signup', methods=['POST'])
+@auth.route('/signup', methods=['GET','POST'])
 def signup():
     user_data = request.get_json()
-    email = user_data['email']
-    password = user_data['password']
-    # add the new user to the database
     error = None
-    if not email:
-        error = 'email is required.'
-    elif not password:
-        error = 'Password is required.'
-    elif User.query.filter_by(email=email).first() is not None:
-        error = 'Email {} is already registered.'.format(email)
+    if not user_data:
+        error = "Bad Data Format"
+    else:
+        email = user_data['email']
+        password = user_data['password']
+    # add the new user to the database
+        if not email:
+            error = 'Email is required.'
+        elif not password:
+            error = 'Password is required.'
+        elif User.query.filter_by(email=email).first() is not None:
+            error = 'Email {} is already registered.'.format(email)
 
     if error is None:
         new_user = User(email=email, password=generate_password_hash(password, method='sha256'))
@@ -53,9 +61,9 @@ def signup():
 
     flash(error)
 
-    return redirect(url_for('auth.signup'))
+    return "Bad Request"
 
-@auth.route('/logout', methods=['POST'])
+@auth.route('/logout', methods=['GET'])
 def logout():
     session.clear()
     return redirect(url_for('auth.login'))
@@ -153,3 +161,6 @@ def my_markets():
     return jsonify({"tickers":resp})
 
 
+
+if __name__ == '__main__':
+    unittest.main()

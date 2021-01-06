@@ -1,27 +1,27 @@
 import click
+import os
 import time
 
+from config import config
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-def create_app():
+def create_app(config_name='default'):
 
     app = Flask(__name__)
+
+    
+    app.config.from_object(config[config_name])
+    config[config_name].init_app(app)
 
     from .cryptoClient import query
     @app.cli.command("crypto")
     def crypto():
         query()
 
-    #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cryptoDatabase.db'
-    app.config.from_pyfile('./config/debug_environment.cfg')
-
     db.init_app(app)
-
-    # from .commands import comds
-    # app.register_blueprint(comds)
 
     # blueprint for auth routes in our app
     from .views import auth 

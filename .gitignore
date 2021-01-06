@@ -3,3 +3,5 @@
 *.pyc
 *.pyo
 cryptoDatabase.db
+cw.log
+*.db

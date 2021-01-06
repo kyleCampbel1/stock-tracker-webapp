@@ -14,16 +14,12 @@ from .models import Metric, Markets
 # TODO: command to clear old data after a day
 
 def query():
-    #exchange = 'binance'
-    #pairs = ['btcusdt', 'ethbtc', 'ltcbtc', 'nanobtc']
     
     for market in Markets.query.all():
         # Forge current market ticker, like KRAKEN:BTCUSD
         #ticker = "{}:{}".format(exchange, pair).upper()
         ticker = market.ticker
         # Request weekly candles for that market
-        # time = datetime.now() - timedelta(minutes=1)
-        # min_ago = time.strftime("%s")
         candle = cw.markets.get(ticker, ohlc=True, periods=['1m']) 
         processCandle(candle, market)
     return 
@@ -43,24 +39,13 @@ def processCandle(candle, market):
         )
     db.session.add(new_metric)
     db.session.commit()
-    # market.metrics.append(new_metric)
-    # db.session.commit()
-    print(str(datetime.utcnow()), 'Done!')
+    #print(str(datetime.utcnow()), 'Done!')
     return
 
 def verifyTicker(pair, exchange):
     ticker = "{}:{}".format(exchange, pair).upper()
     response = cw.markets.get(ticker)
+    # if response['error'] is not None:
+    #     return False, ticker
     # TODO if response is error return false
-    # return response['active']
     return True, ticker
-
-# def main():
-#     query()
-#     return
-
-
-# if __name__ == "__main__":
-#     volumes = []
-#     opens = []
-#     main()
