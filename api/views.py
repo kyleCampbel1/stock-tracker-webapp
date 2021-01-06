@@ -51,7 +51,7 @@ def signup():
         db.session.commit()
         return redirect(url_for('auth.login'))
 
-    #flash(error)
+    flash(error)
 
     return redirect(url_for('auth.signup'))
 
@@ -94,11 +94,10 @@ def metric_day_view(ticker, exchange):
             return "Permission denied, add this metric first"
         else: # query  24 hr data
             day_change = getDayHistory(market)
+            resp = [metric.as_dict() for metric in day_change]
             return jsonify({'day_change':day_change})
     
     return "Invalid link or metric identifiers"
-
-    
 
 @main.route('/add_metric', methods=['POST'])
 @login_required
@@ -134,15 +133,17 @@ def remove_metric():
 def metric_rankings():
     user = User.query.filter_by(id=g.user.id).first()
     user_market_names = np.array([market.ticker for market in user.markets])
-    deviations = []
-    for market in user.markets:
+    deviations = np.ones(len(user.markets))
+    for i, market in enumerate(user.markets):
         day_change = getDayHistory(market)
         volumes = np.array([metric.volume for metric in day_change])
         stdDev = np.std(volumes)
-        deviations += [stdDev]
+        deviations[i] = stdDev
     sortInds = np.argsort(deviations)
-    sorted_metrics = user_market_names[sortInds]
-    return sorted_metrics
+    #sortedDevs = deviations[sortInds]
+    #sorted_metrics = user_market_names[sortInds]
+    resp = {user_market_names[i]:deviations[i] for i in sortInds}
+    return resp
 
 @main.route('/my_markets', methods=['GET'])
 @login_required

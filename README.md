@@ -11,7 +11,7 @@ Could create tables in database for each market if searching for the instances o
 concurrency issues
 
 
-Run api.createDB.py after the initail download. Create your own private key in the debug_environment.cfg
+Run api.createDB.py after the initial download. Create your own private key in the debug_environment.cfg
 The command 'flask run' will locally run the development version of the app - production is not currently configured. You can use the webservice Postman to send requests to the REST API. Because signup and login redirect you, PostMan makes it seems like your requests are invalid, but in your editor (VSCode) you will see the requests go through.
 
 More confirmation the requests are valid can come from running sqlite3 api/cryptoDatabase.db from the terminal and then querying to view your changes.

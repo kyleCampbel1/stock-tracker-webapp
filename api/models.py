@@ -17,6 +17,9 @@ class Metric(db.Model):
     volume = db.Column(db.Float)
     volume_quote = db.Column(db.Float)
 
+    def as_dict(self):
+       return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(50), unique=True)

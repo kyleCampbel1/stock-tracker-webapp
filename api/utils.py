@@ -1,6 +1,8 @@
 from flask import g
 from .app import db
-from .models import Markets, User, tags
+from datetime import datetime, timedelta
+from .models import Markets, Metric, User, tags
+
 
 
 def addMarketToUser(ticker):
@@ -32,7 +34,6 @@ def removeMarket(ticker):
     return
 
 def getDayHistory(market):
-    time = datetime.now() - timedelta(days=1)
-    day_ago = time.strftime("%s")
-    day_change = Metric.query.filter_by(close_time>=day_ago, market_id=market.id).all()
+    day_ago = (datetime.utcnow() - timedelta(days=1)).timestamp()
+    day_change = Metric.query.filter(Metric.close_time>=day_ago, Metric.market_id==market.id).all()
     return day_change
