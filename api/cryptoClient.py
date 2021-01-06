@@ -7,11 +7,11 @@ from .models import Metric, Markets
 # metrics to create could be stored in DB from user end
 # then createMetrics retrieves and forms the requests
 
-# TODO: startup procedure of first 24 hours of data
+# TODO: #3 startup procedure to populate first 24 hours of data
 
-# TODO: create limiter to turn off once queries exceed limit
+# TODO: #2 command to clear old data after a day
 
-# TODO: command to clear old data after a day
+# TODO: #1 email users whose instant metrics triple the 1 hr rolling average
 
 def query():
     
@@ -47,5 +47,5 @@ def verifyTicker(pair, exchange):
     response = cw.markets.get(ticker)
     # if response['error'] is not None:
     #     return False, ticker
-    # TODO if response is error return false
+    # TODO #4 if response is error return false
     return True, ticker
