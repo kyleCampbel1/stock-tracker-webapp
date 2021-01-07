@@ -1,7 +1,7 @@
 import functools
 import numpy as np
 
-from flask import Blueprint, jsonify, redirect, url_for, request, flash, session, g
+from flask import abort, Blueprint, jsonify, redirect, url_for, request, flash, session, g
 from .app import db 
 from .models import User, Metric, Markets
 from .utils import addMarketToDb, addMarketToUser, removeMarket, getDayHistory
@@ -14,54 +14,43 @@ auth = Blueprint('auth', __name__)
 @auth.route('/login', methods=['POST'])
 def login():
     user_data = request.get_json()
-    error = None
-    email = ''
-    passoword = ''
     if not user_data:
-        error = "Bad Data Format"
-    else:
+        abort(400)
+    try:
         email = user_data['email']
         password = user_data['password']
-
+    except KeyError:
+        abort(400, {"error":"KeyError"})
     user = User.query.filter_by(email=email).first()
     if not user or not check_password_hash(user.password, password):
-        error = 'Incorrect credentials'
-    if error is None:
-            session.clear()
-            session['user_id'] = user.id 
-            return redirect(url_for('main.add_metric'))
-    # if the above check passes, then we know the user has the right credentials
-    flash(error)
-    return error # if the user doesn't exist or password is wrong, reload the page
+        abort(400, {"error":"Incorrect credentials"})
 
-@auth.route('/signup', methods=['GET','POST'])
+    session.clear()
+    session['user_id'] = user.id 
+    # if the above check passes, then we know the user has the right credentials
+    return redirect(url_for('main.add_metric'))
+
+@auth.route('/signup', methods=['POST'])
 def signup():
     user_data = request.get_json()
-    error = None
     if not user_data:
-        error = "Bad Data Format"
-    else:
+        abort(400)
+    try:
         email = user_data['email']
         password = user_data['password']
+    except KeyError:
+        abort(400, {"error":"KeyError"})
     # add the new user to the database
-        if not email:
-            error = 'Email is required.'
-        elif not password:
-            error = 'Password is required.'
-        elif User.query.filter_by(email=email).first() is not None:
-            error = 'Email {} is already registered.'.format(email)
-
-    if error is None:
-        new_user = User(email=email, password=generate_password_hash(password, method='sha256'))
+    if not email or not password:
+        abort(400, {"error":"missing params"})
+    elif User.query.filter_by(email=email).first() is not None:
+        abort(400, {"error":"Email is already registered"})
+    new_user = User(email=email, password=generate_password_hash(password, method='sha256'))
 
         # add the new user to the database
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for('auth.login'))
-
-    flash(error)
-
-    return "Bad Request"
+    db.session.add(new_user)
+    db.session.commit()
+    return redirect(url_for('auth.login'))
 
 @auth.route('/logout', methods=['GET'])
 def logout():
