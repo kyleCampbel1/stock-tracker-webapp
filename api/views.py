@@ -23,7 +23,7 @@ def login():
         abort(400, {"error":"KeyError"})
     user = User.query.filter_by(email=email).first()
     if not user or not check_password_hash(user.password, password):
-        abort(400, {"error":"Incorrect credentials"})
+        abort(401, {"error":"Incorrect credentials"})
 
     session.clear()
     session['user_id'] = user.id 
