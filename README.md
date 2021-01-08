@@ -2,12 +2,12 @@ Server for webapp to track stock prices and report metrics to users.
 
 System was running Python 3.7.7 on MacOS.
 
-To launch in dev mode (recommended):
+To launch in dev mode:
 After creating your venv, run  pip install -r requirements.txt. Edit the config.py file and insert your secret key. On the commandline, The command 'flask run' will locally run the development version of the app - production is not currently configured. On the command line, run flask shell and from there enter the commands which are in the file 'createDB.py'. 
 
-In order to initiate querying the cryptowatch API for market data each minute the following commands should be run (on Unix based systems). 
+In order to initiate querying the cryptowatch API for market data each minute and sending email alerts to users whose metrics triple the past hour's average, the following commands should be run (on Unix based systems). 
 1. crontab -e
-2. edit the script to have '* * * * * cd /<project directory> && /<project directory>/.venv/bin/flask crypto >>cw.log 2>&1'
+2. edit the script to have '* * * * * cd /\< project directory \> && / \<project directory \>/.venv/bin/flask crypto >>cw.log 2>&1'
 If you are on MacOS, you will likely need to go to Settings/Security and Privacy/Privacy/Full Disk Access, click the + to add applications with access and use cmd+shift+g to access /usr/sbin/cron. Windows should refer to creating a scheduled task to execute the flask crypto command.
 Refer to https://github.com/cryptowatch/cw-sdk-python#setup-your-credential-file for instructions on how to create a paid Cryptowatch account and API key for increased request allowance.
 
@@ -17,20 +17,20 @@ To view changes in the database, at the terminal run: sqlite3 dev.db and from th
 
 Testing:
 Running in test mode:
-The current functionality of the unit tests are limited, and they will likely end in failure. However, running python3 -m unittest tests/<testFile>.py will run the specific testfile. I will be improving the robustness of these tests going forwards. I struggled to find resources on granting test application context, as many endpoints require a user to be logged-in, meaning I have not yet been able to test those.
+Running python3 -m unittest tests/\< testFile \>.py will run the specific testfile. I will be improving the scope of these tests going forwards, as they are currently unit tests to ensure basic functionality for most endpoints and some accessory methods.
   
 How testing should be further expanded:
-I will finish making unit tests for each endpoint of the API and for the accessory functions. We can also add testing for the status codes. Currently, there isn't testing for faulty inputs, so I will devise ways to handle invalid inputs and expand testing for them. I shoul make automated tests to simulate numerous users and metrics and tracking response time. Adding integration tests to ensure the Cryptowatch API works dependably is also a priority.
+If testing were to be made to production scale, we would want some automated manner of tracking updates to the database, that way we can ensure helper functions and requests are properly processing information on the backend. Furthermore, load testing with numerous users accessing the API at once and high volumes of metrics and requests should be a priority.
 
 Architecture:
 
 The API is currently very simple and supports User: registration (POST), logging in (POST), and logging out (GET). Once a user is authenticated, they may add a market to track (POST), view a metric's 1-day history (GET), stop tracking a metric (DELETE), view their metrics ranked against each other (GET), view their metrics (GET)
 
-The respective endpoints are: /signup, /login, /logout, /add_metric, /<ticker>_<exchange>_day_view, /remove_metric, /metric_rankings, /my_markets
+The respective endpoints are: /signup, /login, /logout, /add_metric, /\< ticker \>_\< exchange \>_day_view, /remove_metric, /metric_rankings, /my_markets
   
 The database uses Flask-SQLAlchemy on top of SQLite to provide the advantages of ORM to relate Users to their Metrics and vice versa. The actively managed tables corresponding to classes are User, Metric, Markets. Markets contains a list of the unique exchange and currency pairs across all of the users. Metric contains price and other historical market data on these markets. Metric is updated each minute with data from the Cryptowatch REST API. Naturally, User contains the users. Due to the relationships imposed between these tables, when a user adds a metric, we can add it to their list of metrics, and they will be related to a unique Market in Markets, which will be created, if it does not already exist. Likewise, each market has a list of users which view it, which is automatically updated when a market is associated to a user. Additionally, each market is related to all of the metrics which track its history. This makes getting history for a metric, sending email alerts to all users interested in a particular metric, and displaying information for all of a users metrics a relatively fast search.
 
-Using Click, I defined a custom command, which using cron as specified above will query the Cryptowatch API each minute for new market data. This is advantageous over threading implementations because the flask command has access to the app's context, without the need to pass information back and forth, and can directly update the database. It also does not interrupt the app's ability to process user requests. 
+Using Click, I defined a custom command, which using cron as specified above will query the Cryptowatch API each minute for new market data. This is advantageous over threading implementations because the flask command has access to the app's context, without the need to pass information back and forth, and can directly update the database. It also does not interrupt the app's ability to process user requests. This custom command also scans the database for metrics which tripled their hourly average and will alert the associated users via email.
 
 
 Scalability:

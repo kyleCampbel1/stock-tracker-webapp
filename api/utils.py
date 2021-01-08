@@ -32,16 +32,15 @@ def removeMarket(ticker):
     # any associated users -- would cascade delete to Metric
     return
 
-def getDayHistory(market):
-    day_ago = (datetime.utcnow() - timedelta(days=1)).timestamp()
-    day_change = Metric.query.filter(Metric.close_time>=day_ago, Metric.market_id==market.id).all()
-    return day_change
+def getMetricHistory(market, hours):
+    time_ago = (datetime.utcnow() - timedelta(hours=hours)).timestamp()
+    change = Metric.query.filter(Metric.close_time>=time_ago, Metric.market_id==market.id).all()
+    return change
 
 def emailAlerts():
     for market in Markets.query.all():
-        hour_ago = (datetime.utcnow() - timedelta(hours=1)).timestamp()
-        hour_change = Metric.query.filter(Metric.market_id==market.id, Metric.close_time>=hour_ago).all()
-        if len(hour_change) < 3: return
+        hour_change = getMetricHistory(market, 1)
+        if len(hour_change) < 4: return
         most_recent_data_point = hour_change.pop().volume
         num_pts = len(hour_change)
         accum = 0

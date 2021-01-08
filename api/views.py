@@ -4,7 +4,7 @@ import numpy as np
 from flask import abort, Blueprint, jsonify, redirect, url_for, request, flash, session, g
 from .app import db 
 from .models import User, Metric, Markets
-from .utils import addMarketToDb, addMarketToUser, removeMarket, getDayHistory
+from .utils import addMarketToDb, addMarketToUser, removeMarket, getMetricHistory
 from .cryptoClient import verifyTicker
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -90,11 +90,11 @@ def metric_day_view(ticker, exchange):
         if not market in user.markets:
             abort(400, {"error":"Permission denied, add this metric first"})
         else: # query  24 hr data
-            day_change = getDayHistory(market)
+            day_change = getMetricHistory(market, 24)
             resp = [metric.as_dict() for metric in day_change]
             return jsonify({'day_change':resp})
     
-    abort(400, {"error":"Market does not exist"})
+    abort(404, {"error":"Market does not exist"})
 
 @main.route('/add_metric', methods=['POST'])
 @login_required
@@ -107,10 +107,10 @@ def add_metric():
     if isValid:
         addMarketToDb(ticker)
         addMarketToUser(ticker)
-    else:
-        return 'Invalid Market Identifier Error'
+        return 'Success', 201
 
-    return 'Done', 201
+    abort(404, "This is not a metric")
+
 
 
 @main.route('/remove_metric', methods=['DELETE'])
@@ -123,7 +123,8 @@ def remove_metric():
 
     if isValid:
         removeMarket(ticker)
-    return 'Done', 204
+        return "Success", 204
+    abort(400, "This is not a metric")
 
 @main.route('/metric_rankings', methods=['GET'])
 @login_required
@@ -132,7 +133,7 @@ def metric_rankings():
     user_market_names = np.array([market.ticker for market in user.markets])
     deviations = np.ones(len(user.markets))
     for i, market in enumerate(user.markets):
-        day_change = getDayHistory(market)
+        day_change = getMetricHistory(market, 24)
         volumes = np.array([metric.volume for metric in day_change])
         stdDev = np.std(volumes)
         deviations[i] = stdDev
