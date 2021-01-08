@@ -86,7 +86,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(204,response.status_code)
         self.assertTrue(len(User.query.first().markets)==0)
 
-    def test_market_day_view(self):
+    # def test_market_day_view(self):
 
     
-    def test_metric_rankings(self):
+    # def test_metric_rankings(self):

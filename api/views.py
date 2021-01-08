@@ -87,7 +87,7 @@ def metric_day_view(ticker, exchange):
     if isValid:
         user = User.query.filter_by(id=g.user.id).first()
         market = Markets.query.filter_by(ticker=ticker1).first()
-        if not market in" user.markets:
+        if not market in user.markets:
             abort(400, {"error":"Permission denied, add this metric first"})
         else: # query  24 hr data
             day_change = getDayHistory(market)

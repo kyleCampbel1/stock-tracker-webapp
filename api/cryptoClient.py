@@ -1,4 +1,5 @@
 import cryptowatch as cw
+import json
 
 from datetime import datetime, timedelta
 from .app import db
@@ -44,8 +45,9 @@ def processCandle(candle, market):
 
 def verifyTicker(pair, exchange):
     ticker = "{}:{}".format(exchange, pair).upper()
-    response = cw.markets.get(ticker)
-    # if response['error'] is not None:
-    #     return False, ticker
+    try:
+        response = cw.markets.get(ticker).market
+    except:
+        return False, ticker
     # TODO #4 if response is error return false
     return True, ticker
