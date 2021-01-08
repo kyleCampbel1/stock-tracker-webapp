@@ -92,9 +92,9 @@ def metric_day_view(ticker, exchange):
         else: # query  24 hr data
             day_change = getDayHistory(market)
             resp = [metric.as_dict() for metric in day_change]
-            return jsonify({'day_change':day_change})
+            return jsonify({'day_change':resp})
     
-    abort(400, {"error":"Invalid link or metric identifiers"})
+    abort(400, {"error":"Market does not exist"})
 
 @main.route('/add_metric', methods=['POST'])
 @login_required

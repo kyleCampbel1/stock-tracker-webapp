@@ -1,7 +1,7 @@
 import cryptowatch as cw
 import json
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from .app import db
 from .models import Metric, Markets
 
@@ -17,8 +17,6 @@ from .models import Metric, Markets
 def query():
     
     for market in Markets.query.all():
-        # Forge current market ticker, like KRAKEN:BTCUSD
-        #ticker = "{}:{}".format(exchange, pair).upper()
         ticker = market.ticker
         # Request weekly candles for that market
         candle = cw.markets.get(ticker, ohlc=True, periods=['1m']) 
@@ -30,7 +28,7 @@ def processCandle(candle, market):
     # Each candle is a list of [close_timestamp, open, high, low, close, volume, volume_quote]
     new_metric = Metric(
         market_id=market.id,
-        close_time=candle.of_1m[-1][0], 
+        close_time=datetime.utcnow().timestamp(), 
         open_price=candle.of_1m[-1][1], 
         high=candle.of_1m[-1][2],
         low=candle.of_1m[-1][3],
@@ -49,5 +47,4 @@ def verifyTicker(pair, exchange):
         response = cw.markets.get(ticker).market
     except:
         return False, ticker
-    # TODO #4 if response is error return false
     return True, ticker
