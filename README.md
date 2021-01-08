@@ -9,7 +9,7 @@ In order to initiate querying the cryptowatch API for market data each minute an
 1. crontab -e
 2. edit the script to have '* * * * * cd /\< project directory \> && / \<project directory \>/.venv/bin/flask crypto >>cw.log 2>&1'
 If you are on MacOS, you will likely need to go to Settings/Security and Privacy/Privacy/Full Disk Access, click the + to add applications with access and use cmd+shift+g to access /usr/sbin/cron. Windows should refer to creating a scheduled task to execute the flask crypto command.
-Refer to https://github.com/cryptowatch/cw-sdk-python#setup-your-credential-file for instructions on how to create a paid Cryptowatch account and API key for increased request allowance.
+Refer to https://github.com/cryptowatch/cw-sdk-python#setup-your-credential-file for instructions on how to create a paid Cryptowatch account and API key for increased request allowance. Free request allowance is sufficient for testing. 
 
 For sanity checks, I used the webservice Postman to send requests to the REST API. Because signup and login redirect you, PostMan displays the response to those redirect pages which is a 405, but in your editor (VSCode) you will see the requests go through. General Postman workflow. A user should signup and then login using something of the form {"email":"address","password":"1234"}. Once logged in, a user may add metrics with a JSON of the form {"ticker":"btcusdt","exchange":"binance"}. A complete list of valid exchanges and tickers can be found at https://api.cryptowat.ch/markets. 
 
