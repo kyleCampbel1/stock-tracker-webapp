@@ -126,7 +126,6 @@ class TestCase(unittest.TestCase):
             sess['user_id'] = self.user.id
         # user does have access
         resp = self.client.get('/btceur_kraken_day_view').get_json()['day_change']
-        print(resp)
         self.assertTrue(len(resp)==4)
         # user does not have access
         resp = self.client.get('/btcusdt_binance_day_view')
