@@ -3,8 +3,6 @@ from .app import db
 from datetime import datetime, timedelta
 from .models import Markets, Metric, User, tags
 
-
-
 def addMarketToUser(ticker):
     user = User.query.filter_by(id=g.user.id).first()
     # TODO enforce there is a user (should be due to earlier protocols)
@@ -29,8 +27,8 @@ def removeMarket(ticker):
         market = Markets.query.filter_by(ticker=ticker).first()
         market.users.remove(user)
         db.session.commit()
-    # TODO configure deleting market from Markets if there are no longer
-    # any associated users
+    # TODO #5 configure deleting market from Markets if there are no longer
+    # any associated users -- would cascade delete to Metric
     return
 
 def getDayHistory(market):

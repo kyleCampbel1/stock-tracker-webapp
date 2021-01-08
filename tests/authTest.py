@@ -4,6 +4,7 @@ import json
 
 from api.app import create_app, db
 from api.models import User
+from flask import g
 from werkzeug.security import generate_password_hash
 
 
@@ -72,6 +73,7 @@ class TestCase(unittest.TestCase):
         u1 = User(email="foo.bar@gmail.com", password=generate_password_hash("password123", method='sha256'))
         db.session.add(u1)
         db.session.commit()
+        g.user = u1
         response = self.client.post('/login',
             data=self.payload1, 
             content_type='application/json',
@@ -80,7 +82,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(302, response.status_code)
 
     def test_login_failure(self):
-        u1 = User(email="foo.bar@gmail.com", password="password123")
+        u1 = User(email="foo.bar@gmail.com", password=generate_password_hash("password123", method='sha256'))
         db.session.add(u1)
         db.session.commit()
         payload = json.dumps({"email":"foo.bar@gmail.com","password":"wrongPass"})

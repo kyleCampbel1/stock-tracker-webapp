@@ -87,14 +87,14 @@ def metric_day_view(ticker, exchange):
     if isValid:
         user = User.query.filter_by(id=g.user.id).first()
         market = Markets.query.filter_by(ticker=ticker1).first()
-        if not market in user.markets:
-            return "Permission denied, add this metric first"
+        if not market in" user.markets:
+            abort(400, {"error":"Permission denied, add this metric first"})
         else: # query  24 hr data
             day_change = getDayHistory(market)
             resp = [metric.as_dict() for metric in day_change]
             return jsonify({'day_change':day_change})
     
-    return "Invalid link or metric identifiers"
+    abort(400, {"error":"Invalid link or metric identifiers"})
 
 @main.route('/add_metric', methods=['POST'])
 @login_required

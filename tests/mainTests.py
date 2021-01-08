@@ -6,14 +6,8 @@ from api.app import create_app, db
 from api.models import User, Markets, Metric
 from contextlib import contextmanager
 from flask import appcontext_pushed, g, session
+from werkzeug.security import generate_password_hash
 
-
-@contextmanager
-def user_set(app, user):
-    def handler(sender, **kwargs):
-        g.user = user
-    with appcontext_pushed.connected_to(handler, app):
-        yield
 
 class TestCase(unittest.TestCase):
 
@@ -23,34 +17,76 @@ class TestCase(unittest.TestCase):
         self.app_context.push()
         db.create_all()
         self.client = self.app.test_client()
+        self.user = User(id=1, email="foo.bar@gmail.com", password=generate_password_hash("password123", method='sha256'))
+        self.ticker1 = 'KRAKEN:BTCEUR'
+        self.ticker2 = 'BINANCE:BTCUSDT'
 
     def tearDown(self):
         db.session.remove()
         db.drop_all()
         self.app_context.pop()
 
-    def test_get_markets(self):
-        u1 = User(email='john@yahoo.com', password='12345')
-        db.session.add(u1)
+    def test_getmarkets_auth(self):
+        db.session.add(self.user)
         db.session.commit()
-        exchange1 = 'kraken'
-        pair1 = 'btceur'
-        ticker1 = "{}:{}".format(exchange1, pair1).upper()
-        exchange2 = 'binance'
-        pair2 = 'btcusdt'
-        ticker2 = "{}:{}".format(exchange2, pair2).upper()
-        m1 = Markets(ticker=ticker1)
-        m2 = Markets(ticker=ticker2)
-        db.session.add(m1)
-        db.session.add(m2)
+        m1 = Markets(ticker=self.ticker1)
+        m2 = Markets(ticker=self.ticker2)
+        db.session.add_all([m1,m2])
         db.session.commit()
-        u1.markets.append(m1)
-        u1.markets.append(m2)
+        self.user.markets.append(m1)
+        self.user.markets.append(m2)
         db.session.commit()
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = self.user.id
         
-        with self.app.app_context:
-            user_set(self.app, u1)
-
+        resp = self.client.get('/my_markets').get_json()['tickers']
+        self.assertTrue(self.ticker1 in resp)
+        self.assertTrue(self.ticker2 in resp)
+    
+    def test_getmarkets_noauth(self):
+        # without an active user, we are redirected to login 
         resp = self.client.get('/my_markets')
-        self.assertEqual(len(resp['tickers']), 2)
-        
+        self.assertEqual(302, resp.status_code)
+
+    def test_add_metric(self):
+        db.session.add(self.user)
+        db.session.commit()
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = self.user.id
+        response = self.client.post('/add_metric', 
+            data=json.dumps({"ticker":"btceur","exchange":"kraken"}), 
+            content_type='application/json',
+            follow_redirects=False
+        )
+        self.assertEqual(201, response.status_code)
+        response = self.client.post('/add_metric', 
+            data=json.dumps({"ticker":"btcusdt","exchange":"binance"}), 
+            content_type='application/json',
+            follow_redirects=False
+        )
+        self.assertEqual(201, response.status_code)
+        markets = Markets.query.all()
+        self.assertTrue(len(markets)==2)
+        user_metrics = User.query.first().markets
+        self.assertTrue(user_metrics[0].ticker == self.ticker1)
+        self.assertTrue(user_metrics[1].ticker == self.ticker2)
+
+    def test_remove_metric(self):
+        db.session.add(self.user)
+        db.session.commit()
+        with self.client.session_transaction() as sess:
+            sess['user_id'] = self.user.id
+        self.user.markets.append(Markets(ticker=self.ticker2))
+        self.assertTrue(len(User.query.first().markets)==1)
+        response = self.client.delete('/remove_metric', 
+            data=json.dumps({"ticker":"btcusdt","exchange":"binance"}), 
+            content_type='application/json',
+            follow_redirects=False
+        )
+        self.assertEqual(204,response.status_code)
+        self.assertTrue(len(User.query.first().markets)==0)
+
+    def test_market_day_view(self):
+
+    
+    def test_metric_rankings(self):
